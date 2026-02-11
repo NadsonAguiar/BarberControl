@@ -1,5 +1,7 @@
 package com.example.barbearia.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -9,6 +11,7 @@ import lombok.Setter;
 import java.util.List;
 
 @Entity
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Table(name = "servico")
 @Getter
 @Setter
@@ -23,12 +26,13 @@ public class ServicoModel {
         @Column(name = "nome", nullable = false)
         private String nome;
 
-        @Column(name = "duracao")
+        @Column(name = "duracao", nullable = false)
         private Integer duracao;
 
         @Column(name = "preco", nullable = false)
         private Double preco;
 
         @OneToMany(mappedBy = "servico")
+        @JsonIgnore
         private List<AgendamentoModel> agendamentos;
 }

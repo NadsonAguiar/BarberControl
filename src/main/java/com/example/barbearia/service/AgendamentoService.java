@@ -29,24 +29,61 @@ public class AgendamentoService {
         this.servicoRepository = servicoRepository;
         this.clienteRepository = clienteRepository;
     }
+
+
     public AgendamentoModel criar(Long clienteID, Long servicoID, AgendamentoModel agendamento) {
         ClienteModel cliente = clienteRepository.findById(clienteID)
                 .orElseThrow(() -> new RuntimeException("Não encontrado cliente com esse ID"));
         ServicoModel servico = servicoRepository.findById(servicoID)
                 .orElseThrow(() -> new RuntimeException("Não encontrado serviço com esse ID"));
+
         agendamento.setCliente(cliente);
         agendamento.setServico(servico);
+
+        agendamento.validar();
+
+        if(!agendamento.dataValida()){
+            throw new RuntimeException("Data inválida");
+        }
+
+        LocalTime inicioNovo = agendamento.getHoraInicio();
+        if(inicioNovo == null){
+            throw new RuntimeException("Hora início obrigatória");
+        }
+        LocalTime fimNovo = inicioNovo.plusMinutes(servico.getDuracao());
+        agendamento.setHoraFim(fimNovo);
+
+        LocalTime abertura = LocalTime.of(9,0);
+        LocalTime fechamento = LocalTime.of(18,0);
+        if(inicioNovo.isBefore(abertura) || fimNovo.isAfter(fechamento)){
+            throw new RuntimeException("Horário fora do expediente");
+        }
+
+        List<AgendamentoModel> agendamentosDia = agendamentosDisponiveis(agendamento.getData());
+
+        for (AgendamentoModel a : agendamentosDia) {
+            System.out.println("Existente -> " + a.getHoraInicio() + " até " + a.getHoraFim() + " status: " + a.getStatus());
+        }
+
+        for(AgendamentoModel existente : agendamentosDia){
+            if(AgendamentoModel.conflita(inicioNovo, fimNovo, existente.getHoraInicio(), existente.getHoraFim())){
+                throw new RuntimeException("Horário indisponível");
+            }
+        }
         return agendamentoRepository.save(agendamento);
     }
+
 
     public List<AgendamentoModel> listar(){
         return agendamentoRepository.findAll();
     }
 
+
     public AgendamentoModel buscarPorId(Long id){
         return agendamentoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Não encontrado agendamento com esse ID"));
     }
+
 
     public AgendamentoModel atualizar(Long id, AgendamentoModel agendamentoModel) {
         AgendamentoModel servico = agendamentoRepository.findById(id)
@@ -54,6 +91,7 @@ public class AgendamentoService {
         servico.setId(id);
         return agendamentoRepository.save(agendamentoModel);
     }
+
 
     public void deletar(Long id) {
         agendamentoRepository.deleteById(id);
@@ -70,6 +108,7 @@ public class AgendamentoService {
                 .orElseThrow(() -> new RuntimeException("Não encontrado serviço com esse ID"));
 
         Duration duracao = Duration.ofMinutes(servico.getDuracao());
+
         List<AgendamentoModel> agendamentosDia = agendamentosDisponiveis(data);
 
         List<LocalTime> horariosDisponiveis = new ArrayList<>();
@@ -81,7 +120,6 @@ public class AgendamentoService {
                 horarioAtual = horarioAtual.plus(intervalo)
         ){
 
-            LocalTime inicioHorarioNovo = horarioAtual;
             LocalTime fimHorarioNovo = horarioAtual.plus(duracao);
 
             boolean disponivel = true;
@@ -91,7 +129,7 @@ public class AgendamentoService {
                 LocalTime inicioExistente = agendamento.getHoraInicio();
                 LocalTime fimExistente = agendamento.getHoraFim();
 
-                if(conflita(inicioHorarioNovo, fimHorarioNovo,
+                if(AgendamentoModel.conflita(horarioAtual, fimHorarioNovo,
                         inicioExistente, fimExistente)) {
                     disponivel = false;
                     break;
@@ -99,18 +137,11 @@ public class AgendamentoService {
             }
 
             if(disponivel){
-                horariosDisponiveis.add(inicioHorarioNovo);
+                horariosDisponiveis.add(horarioAtual);
             }
 
         }
         return horariosDisponiveis;
-    }
-
-
-    private boolean conflita(LocalTime inicioNovo, LocalTime fimNovo,
-                            LocalTime inicioExistente, LocalTime fimExistente) {
-        return inicioNovo.isBefore(fimExistente) &&
-                fimNovo.isAfter(inicioExistente);
     }
 
 
@@ -119,7 +150,4 @@ public class AgendamentoService {
         return agendamentoRepository.findByDataAndStatusInOrderByHoraInicioAsc(data, status);
     }
 
-    public boolean dataValida(LocalDate data){
-        return !data.isBefore(LocalDate.now());
-    }
 }
