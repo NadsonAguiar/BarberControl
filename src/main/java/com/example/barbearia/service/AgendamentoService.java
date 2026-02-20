@@ -61,10 +61,6 @@ public class AgendamentoService {
 
         List<AgendamentoModel> agendamentosDia = agendamentosDisponiveis(agendamento.getData());
 
-        for (AgendamentoModel a : agendamentosDia) {
-            System.out.println("Existente -> " + a.getHoraInicio() + " até " + a.getHoraFim() + " status: " + a.getStatus());
-        }
-
         for(AgendamentoModel existente : agendamentosDia){
             if(AgendamentoModel.conflita(inicioNovo, fimNovo, existente.getHoraInicio(), existente.getHoraFim())){
                 throw new RuntimeException("Horário indisponível");
