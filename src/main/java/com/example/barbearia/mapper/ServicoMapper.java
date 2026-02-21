@@ -31,6 +31,12 @@ public class ServicoMapper {
         );
     }
 
+    //Atualiza um Model existente com dados do DTO (usado para edição)
+    public void updateModel(ServicoRequestDto dto, ServicoModel model){
+        model.setNome(dto.nome());
+        model.setDuracao(dto.duracao());
+    }
+
     // Converte lista de Models para lista de DTOs
     public List<ServicoResponseDto> toResponseDTOList(List<ServicoModel> models){
         return models

@@ -1,5 +1,8 @@
 package com.example.barbearia.service;
 
+import com.example.barbearia.dto.request.ServicoRequestDto;
+import com.example.barbearia.dto.response.ServicoResponseDto;
+import com.example.barbearia.mapper.ServicoMapper;
 import com.example.barbearia.model.ClienteModel;
 import com.example.barbearia.model.ServicoModel;
 import com.example.barbearia.repository.ServicoRepository;
@@ -11,32 +14,42 @@ import java.util.List;
 public class ServicoService {
 
     private final ServicoRepository servicoRepository;
+    private final ServicoMapper servicoMapper;
 
-    public ServicoService(ServicoRepository servicoRepository) {
+    public ServicoService(ServicoRepository servicoRepository, ServicoMapper servicoMapper) {
         this.servicoRepository = servicoRepository;
+        this.servicoMapper = servicoMapper;
     }
 
-    public ServicoModel criar(ServicoModel servicoModel) {
-        return servicoRepository.save(servicoModel);
+    public ServicoResponseDto criar(ServicoRequestDto dto) {
+        ServicoModel model = servicoMapper.toModel(dto);
+        ServicoModel save = servicoRepository.save(model);
+        return servicoMapper.toResponseDto(save);
     }
 
-    public List<ServicoModel> listar(){
-        return servicoRepository.findAll();
+    public List<ServicoResponseDto> listar(){
+        List<ServicoModel> all = servicoRepository.findAll();
+        return servicoMapper.toResponseDTOList(all);
     }
 
-    public ServicoModel buscarPorId(Long id){
-        return servicoRepository.findById(id)
+    public ServicoResponseDto buscarPorId(Long id){
+        ServicoModel model = servicoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Não encontrado serviço com esse ID"));
+        return servicoMapper.toResponseDto(model);
     }
 
-    public ServicoModel atualizar(Long id, ServicoModel servicoModel) {
+    public ServicoResponseDto atualizar(Long id, ServicoRequestDto dto) {
         ServicoModel servico = servicoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Não encontrado serviço com esse ID"));
-        servico.setId(id);
-        return servicoRepository.save(servicoModel);
+        servicoMapper.updateModel(dto, servico);
+        ServicoModel update = servicoRepository.save(servico);
+        return servicoMapper.toResponseDto(update);
     }
 
     public void deletar(Long id) {
+        if(!servicoRepository.existsById(id)){
+           throw new RuntimeException("ID não encontrado");
+        }
         servicoRepository.deleteById(id);
     }
 }
