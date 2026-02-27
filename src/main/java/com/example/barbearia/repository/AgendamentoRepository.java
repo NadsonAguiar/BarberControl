@@ -13,4 +13,6 @@ public interface AgendamentoRepository extends JpaRepository<AgendamentoModel, L
 
     List<AgendamentoModel> findByDataAndStatusInOrderByHoraInicioAsc(LocalDate dataInicial, List<Status> status);
 
+    boolean existsByClienteId(Long clienteId);
+    boolean existsByServicoId(Long servicoId);
 }

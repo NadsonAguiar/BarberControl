@@ -35,6 +35,7 @@ public class ServicoMapper {
     public void updateModel(ServicoRequestDto dto, ServicoModel model){
         model.setNome(dto.nome());
         model.setDuracao(dto.duracao());
+        model.setPreco(dto.preco());
     }
 
     // Converte lista de Models para lista de DTOs

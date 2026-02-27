@@ -6,6 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -18,6 +20,7 @@ import java.time.LocalTime;
 @AllArgsConstructor
 public class AgendamentoModel {
 
+    private static final Log log = LogFactory.getLog(AgendamentoModel.class);
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -41,58 +44,17 @@ public class AgendamentoModel {
 
     @Column(name = "status")
     @Enumerated(EnumType.STRING)
-    private Status status;
+    private Status status = Status.MARCADO;
 
     @PrePersist
     @PreUpdate
     void onCreateEnd(){
-        if(horaInicio != null && servico != null && servico.getDuracao() != null){
+        if( servico == null ){
+            log.warn("Serviço está null antes do update na entidade id: " + id);
+            throw new IllegalStateException("Serviço não pode ser null ao atualizar");
+        }
+        if(horaInicio != null && servico.getDuracao() != null){
             this.horaFim = horaInicio.plusMinutes(servico.getDuracao());
         }
     }
-
-    public void calcularHoraFim(){
-        if(horaInicio == null || servico == null || servico.getDuracao() == null){
-            throw new IllegalStateException("Não é possível calcular hora fim");
-        }
-        this.horaFim = horaInicio.plusMinutes(servico.getDuracao());
-    }
-
-    public static boolean conflita(LocalTime inicioNovo, LocalTime fimNovo,
-                                   LocalTime inicioExistente, LocalTime fimExistente){
-        return inicioNovo.isBefore(fimExistente) &&
-                fimNovo.isAfter(inicioExistente);
-    }
-
-    public boolean dataValida(){
-        return data != null && !this.data.isBefore(LocalDate.now());
-    }
-
-    public void validar(){
-        if (data == null) {
-            throw new IllegalArgumentException("Data é obrigatória");
-        }
-
-        if (horaInicio == null) {
-            throw new IllegalArgumentException("Hora início é obrigatória");
-        }
-
-        if (servico == null) {
-            throw new IllegalArgumentException("Serviço é obrigatório");
-        }
-
-        if(servico.getDuracao() == null || servico.getDuracao() <= 0){
-            throw new IllegalArgumentException("Duração do serviço inválida");
-        }
-
-        calcularHoraFim();
-
-        if(!horaFim.isAfter(horaInicio)){
-            throw new IllegalArgumentException("Hora fim deve ser maior que hora início");
-        }
-
-    }
-
-
-
 }
