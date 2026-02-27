@@ -11,6 +11,6 @@ public record ServicoRequestDto(
         @NotNull(message = "Duração é obrigatório")
         Integer duracao,
         @NotNull(message = "Preço é obrigatório")
-        Double preco
+        BigDecimal preco
 ) {
 }

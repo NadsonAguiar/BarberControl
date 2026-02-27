@@ -9,6 +9,6 @@ public record ServicoResponseDto (
         Long id,
         String nome,
         Integer duracao,
-        Double preco
+        BigDecimal preco
 ){
 }

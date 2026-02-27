@@ -31,7 +31,7 @@ public class ServicoModel {
         private Integer duracao;
 
         @Column(name = "preco", nullable = false)
-        private Double preco;
+        private BigDecimal preco;
 
         @OneToMany(mappedBy = "servico")
         @JsonIgnore
