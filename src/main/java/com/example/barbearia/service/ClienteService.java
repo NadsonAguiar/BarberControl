@@ -2,6 +2,7 @@ package com.example.barbearia.service;
 
 import com.example.barbearia.dto.request.ClienteRequestDto;
 import com.example.barbearia.dto.response.ClienteResponseDto;
+import com.example.barbearia.exception.EntidadeNaoEncontradaException;
 import com.example.barbearia.mapper.ClienteMapper;
 import com.example.barbearia.model.ClienteModel;
 import com.example.barbearia.repository.AgendamentoRepository;
@@ -40,14 +41,14 @@ public class ClienteService {
     @Transactional(readOnly = true)
     public ClienteResponseDto buscarPorId(Long id){
         ClienteModel cliente = clienteRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Não encontrado cliente com esse ID"));
+                .orElseThrow(() -> new EntidadeNaoEncontradaException("Não encontrado cliente com esse ID"));
         return clienteMapper.toResponseDto(cliente);
     }
 
     @Transactional
     public ClienteResponseDto atualizar(Long id, ClienteRequestDto request) {
         ClienteModel cliente = clienteRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Não encontrado cliente com esse ID"));
+                .orElseThrow(() -> new EntidadeNaoEncontradaException("Não encontrado cliente com esse ID"));
         clienteMapper.toUpdateModel(request, cliente);
         ClienteModel update = clienteRepository.save(cliente);
         return clienteMapper.toResponseDto(update);
@@ -56,10 +57,10 @@ public class ClienteService {
     @Transactional
     public void deletar(Long id) {
         if(!clienteRepository.existsById(id)) {
-            throw new RuntimeException("ID não encontrado");
+            throw new EntidadeNaoEncontradaException("ID não encontrado");
         }
         if(agendamentoRepository.existsByClienteId(id)){
-            throw new RuntimeException("Cliente possui agendamentos vinculados e não pode ser deletado");
+            throw new EntidadeNaoEncontradaException("Cliente possui agendamentos vinculados e não pode ser deletado");
         }
         clienteRepository.deleteById(id);
     }

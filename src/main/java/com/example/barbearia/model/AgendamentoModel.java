@@ -48,13 +48,10 @@ public class AgendamentoModel {
 
     @PrePersist
     @PreUpdate
-    void onCreateEnd(){
-        if( servico == null ){
-            log.warn("Serviço está null antes do update na entidade id: " + id);
-            throw new IllegalStateException("Serviço não pode ser null ao atualizar");
-        }
-        if(horaInicio != null && servico.getDuracao() != null){
-            this.horaFim = horaInicio.plusMinutes(servico.getDuracao());
+    void onSave(){
+        if( horaFim == null ){
+            log.warn("horaFim está null ao persistir agendamento id: " + id);
         }
     }
+
 }

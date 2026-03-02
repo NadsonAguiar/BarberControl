@@ -2,6 +2,7 @@ package com.example.barbearia.service;
 
 import com.example.barbearia.dto.request.ServicoRequestDto;
 import com.example.barbearia.dto.response.ServicoResponseDto;
+import com.example.barbearia.exception.EntidadeNaoEncontradaException;
 import com.example.barbearia.mapper.ServicoMapper;
 import com.example.barbearia.model.ClienteModel;
 import com.example.barbearia.model.ServicoModel;
@@ -41,14 +42,14 @@ public class ServicoService {
     @Transactional(readOnly = true)
     public ServicoResponseDto buscarPorId(Long id){
         ServicoModel model = servicoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Não encontrado serviço com esse ID"));
+                .orElseThrow(() -> new EntidadeNaoEncontradaException("Não encontrado serviço com esse ID"));
         return servicoMapper.toResponseDto(model);
     }
 
     @Transactional
     public ServicoResponseDto atualizar(Long id, ServicoRequestDto dto) {
         ServicoModel servico = servicoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Não encontrado serviço com esse ID"));
+                .orElseThrow(() -> new EntidadeNaoEncontradaException("Não encontrado serviço com esse ID"));
         servicoMapper.updateModel(dto, servico);
         ServicoModel update = servicoRepository.save(servico);
         return servicoMapper.toResponseDto(update);
@@ -57,10 +58,10 @@ public class ServicoService {
     @Transactional
     public void deletar(Long id) {
         if(!servicoRepository.existsById(id)){
-           throw new RuntimeException("ID não encontrado");
+           throw new EntidadeNaoEncontradaException("ID não encontrado");
         }
         if(agendamentoRepository.existsByServicoId(id)){
-            throw new RuntimeException("Serviço possui agendamentos vinculados e não pode ser deletado");
+            throw new EntidadeNaoEncontradaException("Serviço possui agendamentos vinculados e não pode ser deletado");
         }
         servicoRepository.deleteById(id);
     }

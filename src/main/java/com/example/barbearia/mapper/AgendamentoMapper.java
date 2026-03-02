@@ -1,9 +1,6 @@
 package com.example.barbearia.mapper;
 
-import com.example.barbearia.dto.request.AgendamentoPatchDto;
-import com.example.barbearia.dto.request.AgendamentoRequestDto;
-import com.example.barbearia.dto.request.ClienteRequestDto;
-import com.example.barbearia.dto.request.ServicoRequestDto;
+import com.example.barbearia.dto.request.*;
 import com.example.barbearia.dto.response.AgendamentoResponseDto;
 import com.example.barbearia.dto.response.ClienteResponseDto;
 import com.example.barbearia.model.AgendamentoModel;
@@ -11,6 +8,7 @@ import com.example.barbearia.model.ClienteModel;
 import com.example.barbearia.model.ServicoModel;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalTime;
 import java.util.List;
 
 @Component
@@ -23,6 +21,18 @@ public class AgendamentoMapper {
         model.setServico(servico);
         model.setData(dto.getData());
         model.setHoraInicio(dto.getHoraInicio());
+        model.setHoraFim(dto.getHoraInicio().plusMinutes(servico.getDuracao()));
+        return model;
+    }
+
+    //Sobrecarga de metodo para poder utilizar o AgendamentoCriarDto
+    public AgendamentoModel toModel(ClienteModel cliente, ServicoModel servico, AgendamentoCriarDto dto){
+        AgendamentoModel model = new AgendamentoModel();
+        model.setCliente(cliente);
+        model.setServico(servico);
+        model.setData(dto.getData());
+        model.setHoraInicio(dto.getHoraInicio());
+        model.setHoraFim(dto.getHoraInicio().plusMinutes(servico.getDuracao()));
         return model;
     }
 
@@ -45,6 +55,7 @@ public class AgendamentoMapper {
         model.setServico(servico);
         model.setData(dto.getData());
         model.setHoraInicio(dto.getHoraInicio());
+        model.setHoraFim(dto.getHoraInicio().plusMinutes(servico.getDuracao()));
         model.setStatus(dto.getStatus());
     }
 
@@ -64,6 +75,13 @@ public class AgendamentoMapper {
         if (dto.getStatus() != null){
             model.setStatus(dto.getStatus());
         }
+
+        // Recalcula horaFim sempre que horaInicio ou servico mudar
+        ServicoModel servicoEfetivo = (servico != null) ? servico : model.getServico();
+        LocalTime inicioEfetivo = (dto.getHoraInicio() != null) ? dto.getHoraInicio() : model.getHoraInicio();
+        model.setHoraFim(inicioEfetivo.plusMinutes(servicoEfetivo.getDuracao()));
+
+
     }
 
 

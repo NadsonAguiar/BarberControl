@@ -1,6 +1,7 @@
 package com.example.barbearia.controller;
 
 
+import com.example.barbearia.dto.request.AgendamentoCriarDto;
 import com.example.barbearia.dto.request.AgendamentoPatchDto;
 import com.example.barbearia.dto.request.AgendamentoRequestDto;
 import com.example.barbearia.dto.response.AgendamentoResponseDto;
@@ -29,9 +30,9 @@ public class AgendamentoController {
     public ResponseEntity<AgendamentoResponseDto> criar(
             @PathVariable Long clienteId,
             @PathVariable Long servicoId,
-            @Valid @RequestBody AgendamentoRequestDto agendamentoRequest){
+            @Valid @RequestBody AgendamentoCriarDto agendamentoCriarDto){
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(agendamentoService.criarAgendamento(clienteId, servicoId, agendamentoRequest));
+                .body(agendamentoService.criarAgendamento(clienteId, servicoId, agendamentoCriarDto));
     }
 
     @GetMapping

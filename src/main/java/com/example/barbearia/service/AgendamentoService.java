@@ -1,5 +1,6 @@
 package com.example.barbearia.service;
 
+import com.example.barbearia.dto.request.AgendamentoCriarDto;
 import com.example.barbearia.dto.request.AgendamentoPatchDto;
 import com.example.barbearia.dto.request.AgendamentoRequestDto;
 import com.example.barbearia.dto.response.AgendamentoResponseDto;
@@ -32,7 +33,7 @@ public class AgendamentoService {
 
     public AgendamentoService(AgendamentoRepository agendamentoRepository,
                               ServicoRepository servicoRepository,
-                              ClienteRepository clienteRepository, AgendamentoMapper agendamentoMapper, HorarioFuncionamento horaAberturaEFechamento) {
+                              ClienteRepository clienteRepository, AgendamentoMapper agendamentoMapper) {
         this.agendamentoRepository = agendamentoRepository;
         this.servicoRepository = servicoRepository;
         this.clienteRepository = clienteRepository;
@@ -42,11 +43,9 @@ public class AgendamentoService {
 
 
     @Transactional
-    public AgendamentoResponseDto criarAgendamento(Long clienteID, Long servicoID, AgendamentoRequestDto dto) {
-        ClienteModel cliente = clienteRepository.findById(clienteID)
-                .orElseThrow(() -> new EntidadeNaoEncontradaException("Não encontrado cliente com esse ID"));
-        ServicoModel servico = servicoRepository.findById(servicoID)
-                .orElseThrow(() -> new EntidadeNaoEncontradaException("Não encontrado serviço com esse ID"));
+    public AgendamentoResponseDto criarAgendamento(Long clienteID, Long servicoID, AgendamentoCriarDto dto) {
+        ClienteModel cliente = buscarPorClienteOuLancaException(clienteID);
+        ServicoModel servico = buscarPorServicoOuLancaException(servicoID);
 
         validar(servico, dto);
 
@@ -89,10 +88,8 @@ public class AgendamentoService {
     public AgendamentoResponseDto atualizarAgendamento(Long id, AgendamentoRequestDto dto) {
         AgendamentoModel model = agendamentoRepository.findById(id)
                 .orElseThrow(() -> new EntidadeNaoEncontradaException("Não encontrado agendamento com esse ID"));
-        ClienteModel cliente = clienteRepository.findById(dto.getClienteId())
-                        .orElseThrow(() -> new EntidadeNaoEncontradaException("Não encontrado cliente com esse ID"));
-        ServicoModel servico = servicoRepository.findById(dto.getServicoId())
-                        .orElseThrow(() -> new EntidadeNaoEncontradaException("Não encontrado serviço com esse ID"));
+        ClienteModel cliente = buscarPorClienteOuLancaException(dto.getClienteId());
+        ServicoModel servico = buscarPorServicoOuLancaException(dto.getServicoId());
 
         LocalTime horarioNovo = dto.getHoraInicio();
         LocalTime fimHorarioNovo = horarioNovo.plusMinutes(servico.getDuracao());
@@ -123,20 +120,21 @@ public class AgendamentoService {
                 .orElseThrow(() -> new EntidadeNaoEncontradaException("Não encontrado agendamento com esse ID"));
 
         // Só busca cliente/servico se vieram no request
-        ClienteModel cliente = null;
-        ServicoModel servico = null;
+        ClienteModel cliente = null; // "ainda não sei o cliente"
+        ServicoModel servico = null; // "ainda não sei o serviço"
 
         if( dto.getClienteId() != null){
-            cliente = clienteRepository.findById(dto.getClienteId())
-                    .orElseThrow(() -> new EntidadeNaoEncontradaException("Cliente não encontrado"));
+            cliente = buscarPorClienteOuLancaException(dto.getClienteId());
         }
         if( dto.getServicoId() != null){
-            servico = servicoRepository.findById(dto.getServicoId())
-                    .orElseThrow(() -> new EntidadeNaoEncontradaException("Serviço não encontrado"));
+            servico = buscarPorServicoOuLancaException(dto.getServicoId());
         }
 
-        LocalTime horarioNovo = dto.getHoraInicio();
-        LocalTime fimHorarioNovo = horarioNovo.plusMinutes(servico.getDuracao());
+        ClienteModel clienteEfetivo = (cliente != null) ? cliente : model.getCliente();
+        ServicoModel servicoEfetivo = (servico != null) ? servico : model.getServico();
+
+        LocalTime horarioNovo = (dto.getHoraInicio()) != null ? dto.getHoraInicio() : model.getHoraInicio();
+        LocalTime fimHorarioNovo = horarioNovo.plusMinutes(servicoEfetivo.getDuracao());
 
         LocalTime abertura = HorarioFuncionamento.HORARIO_ABERTURA;
         LocalTime fechamento = HorarioFuncionamento.HORARIO_ENCERRAMENTO;
@@ -178,8 +176,8 @@ public class AgendamentoService {
     @Transactional(readOnly = true)
     public List<LocalTime> listarHorariosDisponiveis(LocalDate data, Long servicoID) {
 
-        LocalTime abertura = LocalTime.of(9, 0);
-        LocalTime fechamento = LocalTime.of(18, 0);
+        LocalTime abertura = HorarioFuncionamento.HORARIO_ABERTURA;
+        LocalTime fechamento = HorarioFuncionamento.HORARIO_ENCERRAMENTO;
 
         ServicoModel servico = servicoRepository.findById(servicoID)
                 .orElseThrow(() -> new EntidadeNaoEncontradaException("Não encontrado serviço com esse ID"));
@@ -190,7 +188,7 @@ public class AgendamentoService {
 
         List<LocalTime> horariosDisponiveis = new ArrayList<>();
 
-        Duration intervalo = Duration.ofMinutes(60);
+        Duration intervalo = Duration.ofMinutes(servico.getDuracao());
 
         for(LocalTime horarioAtual = abertura;
                 !horarioAtual.plus(duracao).isAfter(fechamento);
@@ -222,6 +220,17 @@ public class AgendamentoService {
     }
 
 
+    // Lógica para reduzir repetição de busca por entidade Cliente
+    private ClienteModel buscarPorClienteOuLancaException(Long id){
+        return clienteRepository.findById(id)
+                .orElseThrow(() -> new EntidadeNaoEncontradaException("Cliente não encontrado"));
+    }
+
+    // Lógica para reduzir repetição de busca por entidade Serviço
+    private ServicoModel buscarPorServicoOuLancaException(Long id){
+        return servicoRepository.findById(id)
+                .orElseThrow(() -> new EntidadeNaoEncontradaException("Não encontrado serviço com esse ID"));
+    }
 
 
     // Lógica para verificar se agendamento novo conflita com existente
@@ -232,7 +241,7 @@ public class AgendamentoService {
     }
 
     // Lógica para validar data e horario recebidos do DTO e Serviço
-    public void validar(ServicoModel servico, AgendamentoRequestDto dto) {
+    public void validar(ServicoModel servico, AgendamentoCriarDto dto) {
         if (dto.getData() == null || dto.getData().isBefore(LocalDate.now())) {
             throw new IllegalArgumentException("Data inválida ou no passado");
         }
