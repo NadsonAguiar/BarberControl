@@ -32,12 +32,13 @@ public class AgendamentoService {
 
     public AgendamentoService(AgendamentoRepository agendamentoRepository,
                               ServicoRepository servicoRepository,
-                              ClienteRepository clienteRepository, AgendamentoMapper agendamentoMapper) {
+                              ClienteRepository clienteRepository, AgendamentoMapper agendamentoMapper, HorarioFuncionamento horaAberturaEFechamento) {
         this.agendamentoRepository = agendamentoRepository;
         this.servicoRepository = servicoRepository;
         this.clienteRepository = clienteRepository;
         this.agendamentoMapper = agendamentoMapper;
     }
+
 
 
     @Transactional
@@ -52,8 +53,9 @@ public class AgendamentoService {
         LocalTime inicioNovo = dto.getHoraInicio();
         LocalTime fimNovo = inicioNovo.plusMinutes(servico.getDuracao());
 
-        LocalTime abertura = LocalTime.of(9,0);
-        LocalTime fechamento = LocalTime.of(18,0);
+        LocalTime abertura = HorarioFuncionamento.HORARIO_ABERTURA;
+        LocalTime fechamento = HorarioFuncionamento.HORARIO_ENCERRAMENTO;
+
         if(inicioNovo.isBefore(abertura) || fimNovo.isAfter(fechamento)){
             throw new HorarioIndisponivelException("Horário fora do expediente");
         }
@@ -95,8 +97,8 @@ public class AgendamentoService {
         LocalTime horarioNovo = dto.getHoraInicio();
         LocalTime fimHorarioNovo = horarioNovo.plusMinutes(servico.getDuracao());
 
-        LocalTime abertura = LocalTime.of(9, 0);
-        LocalTime fechamento = LocalTime.of(18,0);
+        LocalTime abertura = HorarioFuncionamento.HORARIO_ABERTURA;
+        LocalTime fechamento = HorarioFuncionamento.HORARIO_ENCERRAMENTO;
         if(horarioNovo.isBefore(abertura) || fimHorarioNovo.isAfter(fechamento)){
             throw new HorarioIndisponivelException("Horário fora do expediente");
         }
@@ -136,8 +138,8 @@ public class AgendamentoService {
         LocalTime horarioNovo = dto.getHoraInicio();
         LocalTime fimHorarioNovo = horarioNovo.plusMinutes(servico.getDuracao());
 
-        LocalTime abertura = LocalTime.of(9, 0);
-        LocalTime fechamento = LocalTime.of(18, 0);
+        LocalTime abertura = HorarioFuncionamento.HORARIO_ABERTURA;
+        LocalTime fechamento = HorarioFuncionamento.HORARIO_ENCERRAMENTO;
         if(horarioNovo.isBefore(abertura) || fimHorarioNovo.isAfter(fechamento)){
             throw new HorarioIndisponivelException("Horário fora do expediente");
         }
