@@ -11,7 +11,6 @@ import lombok.Setter;
 import java.util.List;
 
 @Entity
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Table(name = "cliente")
 @Getter
 @Setter
