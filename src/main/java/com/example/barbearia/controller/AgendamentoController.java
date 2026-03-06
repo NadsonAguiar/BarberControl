@@ -6,6 +6,7 @@ import com.example.barbearia.dto.request.AgendamentoPatchDto;
 import com.example.barbearia.dto.request.AgendamentoRequestDto;
 import com.example.barbearia.dto.response.AgendamentoResponseDto;
 import com.example.barbearia.model.AgendamentoModel;
+import com.example.barbearia.response.ApiSucessResponse;
 import com.example.barbearia.service.AgendamentoService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -27,55 +28,59 @@ public class AgendamentoController {
     }
 
     @PostMapping("/cliente/{clienteId}/servico/{servicoId}")
-    public ResponseEntity<AgendamentoResponseDto> criar(
+    public ResponseEntity<ApiSucessResponse<AgendamentoResponseDto>> criar(
             @PathVariable Long clienteId,
             @PathVariable Long servicoId,
             @Valid @RequestBody AgendamentoCriarDto agendamentoCriarDto){
+        AgendamentoResponseDto agendamentoSalvo = agendamentoService.criarAgendamento(clienteId, servicoId, agendamentoCriarDto);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(agendamentoService.criarAgendamento(clienteId, servicoId, agendamentoCriarDto));
+                .body(ApiSucessResponse.success("Agendamento criado com sucesso",  agendamentoSalvo));
     }
 
     @GetMapping
-    public ResponseEntity<List<AgendamentoResponseDto>> listarAgendamentos(){
-        return ResponseEntity.ok(agendamentoService.listarAgendamentos());
+    public ResponseEntity<ApiSucessResponse<List<AgendamentoResponseDto>>> listarAgendamentos(){
+        List<AgendamentoResponseDto> agendamentos =  agendamentoService.listarAgendamentos();
+        return ResponseEntity.ok(ApiSucessResponse.success(agendamentos));
     }
 
     @GetMapping("/horarios-disponiveis")
-    public ResponseEntity<List<LocalTime>> listarHorariosDisponiveis(
+    public ResponseEntity<ApiSucessResponse<List<LocalTime>>> listarHorariosDisponiveis(
             @RequestParam("data") LocalDate data,
             @RequestParam("servicoId") Long servicoId){
 
         List<LocalTime> horarios = agendamentoService.listarHorariosDisponiveis(data, servicoId);
-        return ResponseEntity.ok(horarios);
+        return ResponseEntity.ok(ApiSucessResponse.success(horarios));
     }
 
 
     @GetMapping("/{id}")
-    public ResponseEntity<AgendamentoResponseDto> buscarPorId(
+    public ResponseEntity<ApiSucessResponse<AgendamentoResponseDto>> buscarPorId(
             @PathVariable Long id){
-        return ResponseEntity.ok(agendamentoService.buscarAgendamentoPorId(id));
+        AgendamentoResponseDto agendamento = agendamentoService.buscarAgendamentoPorId(id);
+        return ResponseEntity.ok(ApiSucessResponse.success(agendamento));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<AgendamentoResponseDto> atualizar(
+    public ResponseEntity<ApiSucessResponse<AgendamentoResponseDto>> atualizar(
             @PathVariable Long id,
             @Valid @RequestBody AgendamentoRequestDto agendamentoRequest){
-        return ResponseEntity.ok(agendamentoService.atualizarAgendamento(id, agendamentoRequest));
+        AgendamentoResponseDto agendamentoAtualizado = agendamentoService.atualizarAgendamento(id, agendamentoRequest);
+        return ResponseEntity.ok(ApiSucessResponse.success("Agendamento atualizado com sucesso",agendamentoAtualizado));
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<AgendamentoResponseDto> patch(
+    public ResponseEntity<ApiSucessResponse<AgendamentoResponseDto>> patch(
             @PathVariable Long id,
-            @RequestBody AgendamentoPatchDto dto
-    ){
-        return ResponseEntity.ok(agendamentoService.atualizarParcialmenteAgendamento(id, dto));
+            @RequestBody AgendamentoPatchDto dto){
+        AgendamentoResponseDto agendamentoAtualizado = agendamentoService.atualizarParcialmenteAgendamento(id, dto);
+        return ResponseEntity.ok(ApiSucessResponse.success("Agendamento atualizado com sucesso", agendamentoAtualizado));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletar(
+    public ResponseEntity<ApiSucessResponse<Void>> deletar(
             @PathVariable Long id){
         agendamentoService.deletar(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiSucessResponse.success("Agendamento deletado com sucesso"));
     }
 
 }

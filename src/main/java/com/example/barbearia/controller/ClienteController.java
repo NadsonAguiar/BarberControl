@@ -3,6 +3,7 @@ package com.example.barbearia.controller;
 import com.example.barbearia.dto.request.ClienteRequestDto;
 import com.example.barbearia.dto.response.ClienteResponseDto;
 import com.example.barbearia.model.ClienteModel;
+import com.example.barbearia.response.ApiSucessResponse;
 import com.example.barbearia.service.ClienteService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -22,35 +23,39 @@ public class ClienteController {
     }
 
     @PostMapping
-    public ResponseEntity<ClienteResponseDto> criarCliente(
+    public ResponseEntity<ApiSucessResponse<ClienteResponseDto>> criarCliente(
             @Valid @RequestBody ClienteRequestDto cliente){
+        ClienteResponseDto clienteSalvo = clienteService.criar(cliente);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(clienteService.criar(cliente));
+                .body(ApiSucessResponse.success("Cliente criado com sucesso", clienteSalvo));
     }
 
     @GetMapping
-    public ResponseEntity<List<ClienteResponseDto>> listarClientes(){
-        return ResponseEntity.ok(clienteService.listar());
+    public ResponseEntity<ApiSucessResponse<List<ClienteResponseDto>>> listarClientes(){
+        List<ClienteResponseDto> clientes = clienteService.listar();
+        return ResponseEntity.ok(ApiSucessResponse.success(clientes));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ClienteResponseDto> buscarClientePorId(
+    public ResponseEntity<ApiSucessResponse<ClienteResponseDto>> buscarClientePorId(
             @PathVariable Long id){
-        return ResponseEntity.ok(clienteService.buscarPorId(id));
+        ClienteResponseDto cliente = clienteService.buscarPorId(id);
+        return ResponseEntity.ok(ApiSucessResponse.success(cliente));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ClienteResponseDto> atualizarCliente(
+    public ResponseEntity<ApiSucessResponse<ClienteResponseDto>> atualizarCliente(
             @PathVariable Long id,
             @Valid @RequestBody ClienteRequestDto cliente){
-        return ResponseEntity.ok(clienteService.atualizar(id, cliente));
+        ClienteResponseDto clienteAtualizado = clienteService.atualizar(id, cliente);
+        return ResponseEntity.ok(ApiSucessResponse.success("Cliente atualizado com sucesso", clienteAtualizado));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletarCliente(
+    public ResponseEntity<ApiSucessResponse<Void>> deletarCliente(
             @PathVariable Long id){
         clienteService.deletar(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiSucessResponse.success("Cliente deletado com sucesso"));
     }
 
 
